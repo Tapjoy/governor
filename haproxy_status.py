@@ -18,7 +18,9 @@ class StatusHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         return self.do_ANY()
     def do_ANY(self):
-        if postgresql.name == etcd.current_leader()["hostname"]:
+        leader = etcd.current_leader()
+        is_leader = leader != None and postgresql.name == leader["hostname"]
+        if ((self.path == "/" or self.path == "/master") and is_leader) or (self.path == "/replica" and not is_leader):
           self.send_response(200)
         else:
           self.send_response(503)
